@@ -5,5 +5,5 @@ CREATE TABLE reminders (
   task_id INTEGER REFERENCES tasks(id),
   created_at TIMESTAMPTZ DEFAULT NOW(),
   due_at TIMESTAMPTZ DEFAULT NULL,
-  is_active BOOLEAN DEFAULT TRUE
+  is_deleted BOOLEAN DEFAULT FALSE
 );

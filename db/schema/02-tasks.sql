@@ -10,5 +10,6 @@ CREATE TABLE tasks (
   description TEXT NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   due_at TIMESTAMPTZ DEFAULT NULL,
-  status task_status DEFAULT 'Not started'
+  status task_status DEFAULT 'Not started',
+  is_deleted BOOLEAN DEFAULT FALSE
 );

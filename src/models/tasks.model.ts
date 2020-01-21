@@ -1,21 +1,22 @@
-import { snakeCase } from 'snake-case';
 import DB from '../lib/db';
 import { ModelSchema, getRequiredColumns, validate, parseSQLResult, parseSQLResultOne, parseSQLQueryColumns } from '../lib/model';
 
-const tasks: ModelSchema = {
+const taskSchema: ModelSchema = {
   id: { validator: Number.isInteger },
   name: { validator: (val: any) => typeof val === 'string' && val.length <= 255, required: true },
   description: { validator: (val: any) => typeof val === 'string', required: true },
   createdAt: { validator: Number.isInteger },
   dueAt: { validator: Number.isInteger, required: true },
   status: { validator: (val: any) => ['Started', 'Not started', 'Completed', 'Inactive'].includes(val) },
+  isDeleted: { validator: (val: any) => typeof val === 'boolean' },
 };
 
-export async function getAll(query: DB['query']): Promise<Record<string, any>[]> {
+export async function getAllTasks(query: DB['query']): Promise<Record<string, any>[]> {
 
   const tasks = await query(
     `SELECT name, description, due_at, status
     FROM tasks
+    WHERE status <> 'Completed' AND is_deleted = FALSE
     ORDER BY due_at ASC`,
     []
   );
@@ -24,14 +25,14 @@ export async function getAll(query: DB['query']): Promise<Record<string, any>[]>
 
 }
 
-export async function getById(query: DB['query'], id: number): Promise<Record<string, any>> {
+export async function getTaskById(query: DB['query'], id: number): Promise<Record<string, any>> {
 
-  if (!id || !Number.isInteger(id)) throw Error('Cannot find a task without a valid task id');
+  validate({ id }, { id: taskSchema.id });
 
   const tasks = await query(
     `SELECT name, description, due_at, status
     FROM tasks
-    WHERE id = $1`,
+    WHERE id = $1 AND is_deleted = FALSE`,
     [id]
   );
 
@@ -39,9 +40,9 @@ export async function getById(query: DB['query'], id: number): Promise<Record<st
 
 }
 
-export async function create(query: DB['query'], input: Record<string, any>): Promise<Record<string, any>> {
+export async function createTask(query: DB['query'], input: Record<string, any>): Promise<Record<string, any>> {
   // input is restricted to required fields
-  const safeInput = validate(input, getRequiredColumns(tasks));
+  const safeInput = validate(input, getRequiredColumns(taskSchema));
 
   const task = await query(
     `INSERT INTO tasks (name, description, due_at)
@@ -57,21 +58,21 @@ export async function create(query: DB['query'], input: Record<string, any>): Pr
   return parsedTask;
 }
 
-export async function update(query: DB['query'], input: Record<string, any>): Promise<Record<string, any>> {
-  // can only update required fields + status
-  const { id: taskId, ...safeInput } = validate(input, { ...getRequiredColumns(tasks), id: tasks.id, status: tasks.status }, false);
+export async function updateTask(query: DB['query'], input: Record<string, any>): Promise<Record<string, any>> {
+  // can only update required fields + status - use deleteTask to delete
+  const { id: taskId, ...safeInput } = validate(input, { ...getRequiredColumns(taskSchema), id: taskSchema.id, status: taskSchema.status }, false);
 
-  if (!taskId || !Number.isInteger(taskId)) throw Error('Cannot update task without a valid task id');
+  if (!taskId) throw Error('Cannot update task without a valid task id');
 
   const { names, values, params, nextParamIndex } = parseSQLQueryColumns(safeInput);
 
   // if nothing to update return empty array
-  if (params.length) return [];
+  if (!params.length) return [];
 
   const task = await query(
     `UPDATE tasks
     SET ${names} = ${values}
-    WHERE id = $${nextParamIndex}
+    WHERE id = $${nextParamIndex} AND is_deleted = FALSE
     RETURNING *`,
     [...params, taskId],
   );
@@ -83,9 +84,28 @@ export async function update(query: DB['query'], input: Record<string, any>): Pr
   return parsedTask;
 }
 
+export async function deleteTask(query: DB['query'], id: number): Promise<Record<string, any>> {
+  validate({ id }, { id: taskSchema.id });
+
+  const task = await query(
+    `UPDATE tasks
+    SET is_deleted = TRUE
+    WHERE id = $1 AND is_deleted = FALSE
+    RETURNING *`,
+    [id],
+  );
+
+  const parsedTask = parseSQLResultOne(task, ['name', 'description', 'dueAt', 'status']);
+
+  if (!parsedTask) throw Error('Task could not be deleted');
+
+  return parsedTask;
+}
+
 export default {
-  create,
-  getAll,
-  getById,
-  update
+  createTask,
+  getAllTasks,
+  getTaskById,
+  updateTask,
+  deleteTask
 };

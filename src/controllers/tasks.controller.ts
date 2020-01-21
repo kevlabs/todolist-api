@@ -10,12 +10,12 @@ export default function(db: DB) {
     // get all tasks
     .get(async (req, res) => {
       try {
-        const tasks = await taskModel.getAll(db.query);
+        const tasks = await taskModel.getAllTasks(db.query);
         res.json(tasks);
 
       } catch (err) {
         console.log(err);
-        res.status(400);
+        res.status(400).send({ error: 'Failed to retrieve tasks' });
       }
 
     })
@@ -23,12 +23,14 @@ export default function(db: DB) {
     // create new task
     .post(async (req, res) => {
       try {
-        const task = await taskModel.create(db.query, req.body);
+        const task = await taskModel.createTask(db.query, req.body);
+        // create default reminder
+
         res.json(task);
 
       } catch (err) {
         console.log(err);
-        res.status(400);
+        res.status(400).send({ error: 'Failed to create task' });
       }
 
     });
@@ -37,12 +39,12 @@ export default function(db: DB) {
     // get task by id
     .get(async (req, res) => {
       try {
-        const task = await taskModel.getById(db.query, parseInt(req.params.id));
+        const task = await taskModel.getTaskById(db.query, parseInt(req.params.id));
         res.json(task);
 
       } catch (err) {
         console.log(err);
-        res.status(400);
+        res.status(400).send({ error: 'Failed to retrieve task' });
       }
 
     })
@@ -50,18 +52,32 @@ export default function(db: DB) {
     // update task
     .put(async (req, res) => {
       try {
-        const task = await taskModel.update(db.query, { ...req.body, id: parseInt(req.params.id) });
+        const task = await taskModel.updateTask(db.query, { ...req.body, id: parseInt(req.params.id) });
         res.json(task);
 
       } catch (err) {
-        console.log(err);
-        res.status(400);
+        console.log('Error', err);
+        res.status(400).send({ error: 'Failed to update task' });
+      }
+
+    })
+
+    // delete task
+    .delete(async (req, res) => {
+      try {
+        const task = await taskModel.deleteTask(db.query, parseInt(req.params.id));
+        // delete reminders
+
+        res.json(task);
+
+      } catch (err) {
+        console.log('Error', err);
+        res.status(400).send({ error: 'Failed to delete task' });
       }
 
     });
 
   
-
 
   return router;
 
