@@ -14,6 +14,7 @@ import { dbParams } from './lib/config-vars';
 // server config
 const ENV = process.env.ENV || 'development';
 const PORT = parseInt(process.env.PORT || '8080', 10);
+process.env.TZ = process.env.TZ  || 'America/Toronto'
 
 // instantiate db and storage
 const db = new DB(dbParams);
