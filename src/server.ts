@@ -18,7 +18,7 @@ const ENV = process.env.ENV || 'development';
 const PORT = parseInt(process.env.PORT || '8080', 10);
 process.env.TZ = process.env.TZ  || 'America/Toronto'
 
-// instantiate db and storage
+// instantiate db
 const db = new DB(dbParams);
 
 const app = express();
