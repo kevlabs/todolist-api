@@ -11,6 +11,8 @@ import bodyParser from 'body-parser';
 import DB from './lib/db';
 import { dbParams } from './lib/config-vars';
 
+import taskRouter from './controllers/tasks.controller';
+
 // server config
 const ENV = process.env.ENV || 'development';
 const PORT = parseInt(process.env.PORT || '8080', 10);
@@ -29,10 +31,12 @@ app.use(bodyParser.json({ limit: '10mb' }));
 app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
 
 
+app.use('/', taskRouter(db));
+
 // hello world
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public/index.html'));
-});
+// app.get('/', (req, res) => {
+//   res.sendFile(path.join(__dirname, 'public/index.html'));
+// });
 
 // serve static files in public/
 app.use(express.static(path.join(__dirname, 'public')));

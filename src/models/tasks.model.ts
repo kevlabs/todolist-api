@@ -11,6 +11,34 @@ const tasks: ModelSchema = {
   status: { validator: (val: any) => ['Started', 'Not started', 'Completed', 'Inactive'].includes(val) },
 };
 
+export async function getAll(query: DB['query']): Promise<Record<string, any>[]> {
+
+  const tasks = await query(
+    `SELECT name, description, due_at, status
+    FROM tasks
+    ORDER BY due_at ASC`,
+    []
+  );
+
+  return parseSQLResult(tasks, ['name', 'description', 'dueAt', 'status']);
+
+}
+
+export async function getById(query: DB['query'], id: number): Promise<Record<string, any>> {
+
+  if (!id || !Number.isInteger(id)) throw Error('Cannot find a task without a valid task id');
+
+  const tasks = await query(
+    `SELECT name, description, due_at, status
+    FROM tasks
+    WHERE id = $1`,
+    [id]
+  );
+
+  return parseSQLResultOne(tasks, ['name', 'description', 'dueAt', 'status']);
+
+}
+
 export async function create(query: DB['query'], input: Record<string, any>): Promise<Record<string, any>> {
   // input is restricted to required fields
   const safeInput = validate(input, getRequiredColumns(tasks));
@@ -33,7 +61,7 @@ export async function update(query: DB['query'], input: Record<string, any>): Pr
   // can only update required fields + status
   const { id: taskId, ...safeInput } = validate(input, { ...getRequiredColumns(tasks), id: tasks.id, status: tasks.status }, false);
 
-  if (!taskId) throw Error('Cannot update task without task id');
+  if (!taskId || !Number.isInteger(taskId)) throw Error('Cannot update task without a valid task id');
 
   const { names, values, params, nextParamIndex } = parseSQLQueryColumns(safeInput);
 
@@ -54,3 +82,10 @@ export async function update(query: DB['query'], input: Record<string, any>): Pr
 
   return parsedTask;
 }
+
+export default {
+  create,
+  getAll,
+  getById,
+  update
+};
