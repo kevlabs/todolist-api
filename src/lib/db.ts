@@ -61,7 +61,7 @@ export default class DB {
    * a function with signature and behaviour identical to DB.prototype.query().
    * @return Promise resolving to the return value of the callback function.
    */
-  transaction(callback: (query: (text: string, params?: any[]) => Promise<any[]>) => Promise<any>): Promise<any> {
+  public transaction(callback: (query: this['query']) => Promise<any>): Promise<any> {
     return (async () => {
       const client = await this.pool!.connect();
       try {

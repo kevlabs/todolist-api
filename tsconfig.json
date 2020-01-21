@@ -1,7 +1,6 @@
 {
   "compilerOptions": {
     "module": "commonjs",
-    "strict": true,
     "baseUrl": "./",
     "outDir": "build",
     "esModuleInterop": true,
