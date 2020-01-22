@@ -16,7 +16,7 @@ function setUpReminder(db: DB, email: Email, reminder: ParsedFullReminder & Pars
         // { name: 'Test User', address: process.env.TEST_EMAIL_RECIPIENT },
         { name: reminder.username, address: reminder.email },
         `Reminder for to-do: ${reminder.taskName}`,
-        `Dear ${reminder.username},\n\nYou have asked to be reminder about task: ${reminder.taskName}\nTask description: ${reminder.taskDesciption}\nTask due at: ${reminder.taskDueAt}\nNotes: ${reminder.notes}\n\nThank you using to-do-list,\n\nCheers`,
+        `Dear ${reminder.username},\n\nYou have asked to be reminder about task: ${reminder.taskName}\nTask description: ${reminder.taskDescription}\nTask due at: ${reminder.taskDueAt}\nNotes: ${reminder.notes}\n\nThank you using to-do-list,\n\nCheers`,
       )
 
       // update status to sent

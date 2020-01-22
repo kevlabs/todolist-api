@@ -21,7 +21,7 @@ export type ParsedReminderUser = {
 
 export type ParsedReminderTask = {
   taskName: ITask['name'];
-  taskDesciption: ITask['description'];
+  taskDescription: ITask['description'];
   taskDueAt: ITask['dueAt'];
 }
 
@@ -52,7 +52,7 @@ export async function getAllReminders(query: DB['query'], userId?: number): Prom
     userId ? [userId] : [],
   );
 
-  return parseSQLResult(reminders, ['taskId', 'taskName', 'taskDesciption', 'taskDueAt', 'id', 'notes', 'dueAt', 'status']) as (ParsedFullReminder | undefined)[];
+  return parseSQLResult(reminders, ['taskId', 'taskName', 'taskDescription', 'taskDueAt', 'id', 'notes', 'dueAt', 'status']) as (ParsedFullReminder | undefined)[];
 
 }
 
@@ -69,7 +69,7 @@ export async function getReminderById(query: DB['query'], id: number, userId?: n
     userId ? [id, userId] : [id],
   );
 
-  return parseSQLResultOne(reminder, ['taskId', 'taskName', 'taskDesciption', 'taskDueAt', 'id', 'notes', 'dueAt', 'status']) as ParsedFullReminder | undefined;
+  return parseSQLResultOne(reminder, ['taskId', 'taskName', 'taskDescription', 'taskDueAt', 'id', 'notes', 'dueAt', 'status']) as ParsedFullReminder | undefined;
 
 }
 
@@ -88,7 +88,7 @@ export async function getAllRemindersByTaskId(query: DB['query'], taskId: number
     userId ? [taskId, userId] : [taskId],
   );
 
-  return parseSQLResult(reminders, ['taskId', 'taskName', 'taskDesciption', 'taskDueAt', 'id', 'notes', 'dueAt', 'status']) as (ParsedFullReminder | undefined)[];
+  return parseSQLResult(reminders, ['taskId', 'taskName', 'taskDescription', 'taskDueAt', 'id', 'notes', 'dueAt', 'status']) as (ParsedFullReminder | undefined)[];
 
 }
 
@@ -106,7 +106,7 @@ export async function getAllRemindersDueBy(query: DB['query'], timestamp: Date, 
     userId ? [timestamp, userId] : [timestamp],
   );
 
-  return parseSQLResult(reminders, ['username', 'email', 'taskId', 'taskName', 'taskDesciption', 'taskDueAt', 'id', 'notes', 'dueAt', 'status']) as (ParsedFullReminder & ParsedReminderUser | undefined)[];
+  return parseSQLResult(reminders, ['username', 'email', 'taskId', 'taskName', 'taskDescription', 'taskDueAt', 'id', 'notes', 'dueAt', 'status']) as (ParsedFullReminder & ParsedReminderUser | undefined)[];
 
 }
 
