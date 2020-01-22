@@ -12,19 +12,35 @@ const reminderSchema: ModelSchema = {
   isDeleted: { validator: (val: any) => typeof val === 'boolean' },
 };
 
+// get all current reminders
+export async function getAllReminders(query: DB['query']): Promise<Record<string, any>[]> {
+
+  const reminders = await query(
+    `SELECT t.name as task_name, t.description as task_description, t.due_at as task_due_at, r.id, r.task_id, r.notes, r.due_at, r.status
+    FROM reminders as r
+    JOIN tasks as t ON r.task_id = t.id
+    WHERE r.status <> 'Sent' AND r.is_deleted = FALSE
+    ORDER BY r.due_at ASC`,
+    []
+  );
+
+  return parseSQLResult(reminders, ['taskId', 'taskName', 'taskDesciption', 'taskDueAt', 'id', 'notes', 'dueAt', 'status']);
+
+}
 
 export async function getReminderById(query: DB['query'], id: number): Promise<Record<string, any>> {
 
   validate({ id }, { id: reminderSchema.id });
 
   const reminder = await query(
-    `SELECT id, task_id, notes, due_at, status
-    FROM reminders
-    WHERE id = $1 AND is_deleted = FALSE`,
+    `SELECT t.name as task_name, t.description as task_description, t.due_at as task_due_at, r.id, r.task_id, r.notes, r.due_at, r.status
+    FROM reminders as r
+    JOIN tasks as t ON r.task_id = t.id
+    WHERE r.id = $1 AND r.is_deleted = FALSE`,
     [id]
   );
 
-  return parseSQLResultOne(reminder, ['id', 'taskId', 'notes', 'dueAt', 'status']);
+  return parseSQLResultOne(reminder, ['taskId', 'taskName', 'taskDesciption', 'taskDueAt', 'id', 'notes', 'dueAt', 'status']);
 
 }
 
@@ -33,27 +49,27 @@ export async function getAllRemindersByTaskId(query: DB['query'], taskId: number
   validate({ taskId }, { taskId: reminderSchema.taskId });
 
   const reminders = await query(
-    `SELECT id, task_id, notes, due_at, status
-    FROM reminders
-    WHERE task_id = $1 AND is_deleted = FALSE
-    ORDER BY due_at ASC`,
+    `SELECT t.name as task_name, t.description as task_description, t.due_at as task_due_at, r.id, r.task_id, r.notes, r.due_at, r.status
+    FROM reminders as r
+    JOIN tasks as t ON r.task_id = t.id
+    WHERE r.task_id = $1 AND r.is_deleted = FALSE
+    ORDER BY t.due_at ASC`,
     [taskId]
   );
 
-  return parseSQLResult(reminders, ['id', 'taskId', 'notes', 'dueAt', 'status']);
+  return parseSQLResult(reminders, ['taskId', 'taskName', 'taskDesciption', 'taskDueAt', 'id', 'notes', 'dueAt', 'status']);
 
 }
 
 // query returns some field from the tasks table
-export async function getAllRemindersDueBy(query: DB['query'], timestamp: number): Promise<Record<string, any>[]> {
+export async function getAllRemindersDueBy(query: DB['query'], timestamp: Date): Promise<Record<string, any>[]> {
 
   const reminders = await query(
-    `SELECT tasks.name as task_name, tasks.description as task_description, task.due_at as taskDueAt
-    id, task_id, notes, due_at, status
-    FROM reminders
-    JOIN tasks ON reminders.task_id = tasks.id
-    WHERE due_at <= $1 AND is_deleted = FALSE
-    ORDER BY due_at ASC`,
+    `SELECT t.name as task_name, t.description as task_description, t.due_at as task_due_at, r.id, r.task_id, r.notes, r.due_at, r.status
+    FROM reminders as r
+    JOIN tasks as t ON r.task_id = t.id
+    WHERE r.due_at <= $1 AND r.status <> 'Sent' AND r.is_deleted = FALSE
+    ORDER BY r.due_at ASC`,
     [timestamp]
   );
 
@@ -73,7 +89,7 @@ export async function createReminder(query: DB['query'], input: Record<string, a
     params,
   );
 
-  const parsedReminder = parseSQLResultOne(reminder, ['id', 'name', 'description', 'dueAt', 'status'])
+  const parsedReminder = parseSQLResultOne(reminder, ['id', 'taskId', 'notes', 'dueAt', 'status'])
 
   if (!parsedReminder) throw Error('Reminder could not be created');
 
@@ -106,6 +122,30 @@ export async function updateReminder(query: DB['query'], input: Record<string, a
   return parsedReminder;
 }
 
+export async function updateRemindersByTaskId(query: DB['query'], taskId: number, input: Record<string, any>): Promise<Record<string, any>[]> {
+  // can only update required fields + status - use deleteReminder to delete
+  const safeInput = validate(input, { ...getRequiredColumns(reminderSchema), status: reminderSchema.status }, false);
+
+  const { names, values, params, nextParamIndex } = parseSQLQueryColumns(safeInput);
+
+  // if nothing to update return empty array
+  if (!params.length) return [];
+
+  const reminders = await query(
+    `UPDATE reminders
+    SET ${names} = ${values}
+    WHERE id IN (SELECT id FROM reminders WHERE task_id = $${nextParamIndex}) AND is_deleted = FALSE
+    RETURNING *`,
+    [...params, taskId],
+  );
+
+  const parsedReminders = parseSQLResult(reminders, ['id', 'taskId', 'notes', 'dueAt', 'status']);
+
+  if (!parsedReminders) throw Error('Reminder could not be updated');
+
+  return parsedReminders;
+}
+
 export async function deleteReminder(query: DB['query'], id: number): Promise<Record<string, any>> {
   validate({ id }, { id: reminderSchema.id });
 
@@ -124,10 +164,28 @@ export async function deleteReminder(query: DB['query'], id: number): Promise<Re
   return parsedReminder;
 }
 
+export async function deleteRemindersByTaskId(query: DB['query'], taskId: number): Promise<Record<string, any>[]> {
+  validate({ taskId }, { taskId: reminderSchema.taskId });
+
+  const reminders = await query(
+    `UPDATE reminders
+    SET is_deleted = TRUE
+    WHERE id IN (SELECT id FROM reminders WHERE task_id = $1) AND is_deleted = FALSE
+    RETURNING *`,
+    [taskId],
+  );
+
+  return parseSQLResult(reminders, ['id', 'taskId', 'notes', 'dueAt', 'status']);
+}
+
 export default {
   createReminder,
+  getAllReminders,
   getAllRemindersByTaskId,
+  getAllRemindersDueBy,
   getReminderById,
   updateReminder,
-  deleteReminder
+  updateRemindersByTaskId,
+  deleteReminder,
+  deleteRemindersByTaskId
 };

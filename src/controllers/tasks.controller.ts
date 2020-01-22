@@ -71,7 +71,17 @@ export default function(db: DB) {
     // update task
     .put(async (req, res) => {
       try {
-        const task = await taskModel.updateTask(db.query, { ...req.body, id: parseInt(req.params.id) });
+        const task = await db.transaction(async (query) => {
+
+          // update task
+          const task = await taskModel.updateTask(query, { ...req.body, id: parseInt(req.params.id) });
+
+          // if task status changed to completed, update reminders
+          req.body[status] === 'Completed' && await reminderModel.updateRemindersByTaskId(query, task.id, { status: 'Sent' });
+
+          return task;
+        });
+
         res.json(task);
 
       } catch (err) {
@@ -84,8 +94,16 @@ export default function(db: DB) {
     // delete task
     .delete(async (req, res) => {
       try {
-        const task = await taskModel.deleteTask(db.query, parseInt(req.params.id));
-        // delete reminders
+        const task = await db.transaction(async (query) => {
+          // delete task
+          const task = await taskModel.deleteTask(db.query, parseInt(req.params.id));
+
+          // delete reminders
+          await reminderModel.deleteRemindersByTaskId(query, task.id);
+
+          return task;
+
+        });
 
         res.json(task);
 
@@ -95,6 +113,19 @@ export default function(db: DB) {
       }
 
     });
+    
+  // get all reminders for task
+  router.get('/:id/reminders', async (req, res) => {
+    try {
+      const reminders = await reminderModel.getAllRemindersByTaskId(db.query, parseInt(req.params.id));
+      res.json(reminders);
+
+    } catch (err) {
+      console.log(err);
+      res.status(400).send({ error: 'Failed to retrieve reminders for task' });
+    }
+
+  });
 
   
 

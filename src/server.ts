@@ -10,8 +10,10 @@ import morgan from 'morgan';
 import bodyParser from 'body-parser';
 import DB from './lib/db';
 import { dbParams } from './lib/config-vars';
-
 import taskRouter from './controllers/tasks.controller';
+import reminderRouter from './controllers/reminders.controller';
+import sendReminders from './jobs/send-reminders.job';
+
 
 // server config
 const ENV = process.env.ENV || 'development';
@@ -21,6 +23,10 @@ process.env.TZ = process.env.TZ  || 'America/Toronto'
 // instantiate db
 const db = new DB(dbParams);
 
+// start reminder job
+sendReminders(db, 1);
+
+// instantiate app/server
 const app = express();
 
 // use morgan in dev only
@@ -31,12 +37,8 @@ app.use(bodyParser.json({ limit: '10mb' }));
 app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
 
 
-app.use('/', taskRouter(db));
-
-// hello world
-// app.get('/', (req, res) => {
-//   res.sendFile(path.join(__dirname, 'public/index.html'));
-// });
+app.use('/api/tasks', taskRouter(db));
+app.use('/api/reminders', reminderRouter(db));
 
 // serve static files in public/
 app.use(express.static(path.join(__dirname, 'public')));
