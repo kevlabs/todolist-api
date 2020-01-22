@@ -1,4 +1,5 @@
 import { DBParams } from './db';
+import { EmailParams } from './email';
 
 function getDBParams(): DBParams {
   // retrieve db params from connection string if exists
@@ -27,3 +28,12 @@ function getDBParams(): DBParams {
 }
 
 export const dbParams: DBParams = getDBParams();
+
+export const emailParams: EmailParams = {
+  host: process.env.EMAIL_HOST || '',
+  port: parseInt(process.env.EMAIL_PORT || '', 10),
+  senderName: process.env.EMAIL_SENDER_NAME || '',
+  senderEmail: process.env.EMAIL_SENDER_ADDRESS || '',
+  user: process.env.EMAIL_USER || '',
+  password: process.env.EMAIL_PASS || '',
+};
