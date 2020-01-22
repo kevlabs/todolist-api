@@ -1,12 +1,13 @@
 import DB from '../lib/db';
 import { ModelSchema, getRequiredColumns, validate, parseSQLResult, parseSQLResultOne, parseSQLQueryColumns } from '../lib/model';
+import { isDate } from '../lib/utils';
 
 const taskSchema: ModelSchema = {
   id: { validator: Number.isInteger },
   name: { validator: (val: any) => typeof val === 'string' && val.length <= 255, required: true },
   description: { validator: (val: any) => typeof val === 'string', required: true },
-  createdAt: { validator: Number.isInteger },
-  dueAt: { validator: Number.isInteger, required: true },
+  createdAt: { validator: isDate },
+  dueAt: { validator: isDate, required: true },
   status: { validator: (val: any) => ['Started', 'Not started', 'Completed', 'Inactive', 'Overdue'].includes(val) },
   isDeleted: { validator: (val: any) => typeof val === 'boolean' },
 };

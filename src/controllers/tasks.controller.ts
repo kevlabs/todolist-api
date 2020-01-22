@@ -24,7 +24,6 @@ export default function(db: DB) {
     // create new task
     .post(async (req, res) => {
       try {
-
         const task = await db.transaction(async (query) => {
 
           const task = await taskModel.createTask(query, req.body);
@@ -35,7 +34,7 @@ export default function(db: DB) {
             const reminderInput = {
               taskId: task.id,
               notes: `Your task ${task.name} is almost due.`,
-              dueAt: task.dueAt - fiveMinutes
+              dueAt: new Date(task.dueAt.getTime() - fiveMinutes)
             }
 
             await reminderModel.createReminder(query, reminderInput);
@@ -43,7 +42,7 @@ export default function(db: DB) {
 
           return task;
 
-        })
+        });
         // const task = await taskModel.createTask(db.query, req.body);
 
         res.json(task);
