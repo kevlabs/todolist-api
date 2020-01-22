@@ -74,39 +74,39 @@ export async function getReminderById(query: DB['query'], id: number, userId?: n
 }
 
 // for use by reminder scheduler
-export async function getAllRemindersByTaskId(query: DB['query'], taskId: number, userId?: number): Promise<(ParsedFullReminder & ParsedReminderUser | undefined)[]> {
+export async function getAllRemindersByTaskId(query: DB['query'], taskId: number, userId?: number): Promise<(ParsedFullReminder | undefined)[]> {
 
   validate({ taskId }, { taskId: reminderSchema.taskId });
 
   const reminders = await query(
-    `SELECT u.username, u.email, t.name as task_name, t.description as task_description, t.due_at as task_due_at, r.id, r.task_id, r.notes, r.due_at, r.status
+    `SELECT t.name as task_name, t.description as task_description, t.due_at as task_due_at, r.id, r.task_id, r.notes, r.due_at, r.status
     FROM reminders as r
     JOIN tasks as t ON r.task_id = t.id
-    JOIN users as u ON t.user_id = u.id
     WHERE r.task_id = $1 AND r.is_deleted = FALSE
     ${userId ? ' AND t.user_id = $2' : '' }
     ORDER BY t.due_at ASC`,
     userId ? [taskId, userId] : [taskId],
   );
 
-  return parseSQLResult(reminders, ['username', 'email', 'taskId', 'taskName', 'taskDesciption', 'taskDueAt', 'id', 'notes', 'dueAt', 'status']) as (ParsedFullReminder & ParsedReminderUser | undefined)[];
+  return parseSQLResult(reminders, ['taskId', 'taskName', 'taskDesciption', 'taskDueAt', 'id', 'notes', 'dueAt', 'status']) as (ParsedFullReminder | undefined)[];
 
 }
 
 // query returns some field from the tasks table
-export async function getAllRemindersDueBy(query: DB['query'], timestamp: Date, userId?: number): Promise<(ParsedFullReminder | undefined)[]> {
+export async function getAllRemindersDueBy(query: DB['query'], timestamp: Date, userId?: number): Promise<(ParsedFullReminder & ParsedReminderUser | undefined)[]> {
 
   const reminders = await query(
-    `SELECT t.name as task_name, t.description as task_description, t.due_at as task_due_at, r.id, r.task_id, r.notes, r.due_at, r.status
+    `SELECT u.username, u.email, t.name as task_name, t.description as task_description, t.due_at as task_due_at, r.id, r.task_id, r.notes, r.due_at, r.status
     FROM reminders as r
     JOIN tasks as t ON r.task_id = t.id
+    JOIN users as u ON t.user_id = u.id
     WHERE r.due_at <= $1 AND r.status = 'Pending' AND r.is_deleted = FALSE
     ${userId ? ' AND t.user_id = $2' : '' }
     ORDER BY r.due_at ASC`,
     userId ? [timestamp, userId] : [timestamp],
   );
 
-  return parseSQLResult(reminders, ['taskId', 'taskName', 'taskDesciption', 'taskDueAt', 'id', 'notes', 'dueAt', 'status']) as (ParsedFullReminder | undefined)[];
+  return parseSQLResult(reminders, ['username', 'email', 'taskId', 'taskName', 'taskDesciption', 'taskDueAt', 'id', 'notes', 'dueAt', 'status']) as (ParsedFullReminder & ParsedReminderUser | undefined)[];
 
 }
 

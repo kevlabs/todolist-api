@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { accessControl } from '../lib/utils'
 import DB from '../lib/db';
 import reminderModel from '../models/reminders.model';
-import taskModel from 'src/models/tasks.model';
+import taskModel from '../models/tasks.model';
 
 export default function(db: DB) {
 
