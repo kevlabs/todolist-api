@@ -6,7 +6,7 @@ interface ReminderInterface {
   id: number;
   notes: string;
   dueAt: Date;
-  status: 'Pending' | 'Sent';
+  status: 'Pending' | 'Sent' | 'Cancelled';
   taskId: number;
   taskName: string;
   taskDesciption: string;

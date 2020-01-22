@@ -8,7 +8,7 @@ const reminderSchema: ModelSchema = {
   notes: { validator: (val: any) => typeof val === 'string', required: true },
   createdAt: { validator: isDate },
   dueAt: { validator: isDate, required: true },
-  status: { validator: (val: any) => ['Pending', 'Sent'].includes(val) },
+  status: { validator: (val: any) => ['Pending', 'Sent', 'Cancelled'].includes(val) },
   isDeleted: { validator: (val: any) => typeof val === 'boolean' },
 };
 
@@ -19,7 +19,7 @@ export async function getAllReminders(query: DB['query']): Promise<Record<string
     `SELECT t.name as task_name, t.description as task_description, t.due_at as task_due_at, r.id, r.task_id, r.notes, r.due_at, r.status
     FROM reminders as r
     JOIN tasks as t ON r.task_id = t.id
-    WHERE r.status <> 'Sent' AND r.is_deleted = FALSE
+    WHERE r.status = 'Pending' AND r.is_deleted = FALSE
     ORDER BY r.due_at ASC`,
     []
   );
@@ -68,7 +68,7 @@ export async function getAllRemindersDueBy(query: DB['query'], timestamp: Date):
     `SELECT t.name as task_name, t.description as task_description, t.due_at as task_due_at, r.id, r.task_id, r.notes, r.due_at, r.status
     FROM reminders as r
     JOIN tasks as t ON r.task_id = t.id
-    WHERE r.due_at <= $1 AND r.status <> 'Sent' AND r.is_deleted = FALSE
+    WHERE r.due_at <= $1 AND r.status = 'Pending' AND r.is_deleted = FALSE
     ORDER BY r.due_at ASC`,
     [timestamp]
   );

@@ -1,7 +1,7 @@
 DROP TABLE IF EXISTS reminders CASCADE;
 DROP TYPE IF EXISTS reminder_status CASCADE;
 
-CREATE TYPE reminder_status AS ENUM ('Pending', 'Sent');
+CREATE TYPE reminder_status AS ENUM ('Pending', 'Sent', 'Cancelled');
 
 CREATE TABLE reminders (
   id SERIAL PRIMARY KEY NOT NULL,
