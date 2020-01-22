@@ -20,8 +20,10 @@
   },
   "homepage": "https://github.com/kevlabs/todolist#readme",
   "dependencies": {
+    "@types/cookie-session": "^2.0.37",
     "body-parser": "^1.19.0",
     "camelcase-keys": "^6.1.1",
+    "cookie-session": "^1.4.0",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "node-schedule": "^1.3.2",

@@ -4,6 +4,7 @@ import { isDate } from '../lib/utils';
 
 export interface ITask {
   id: number;
+  userId: number;
   name: string;
   description: string;
   createdAt: Date;
@@ -16,6 +17,7 @@ export type ParsedTask = Pick<ITask, 'id' | 'name' | 'description' | 'dueAt' | '
 
 const taskSchema: ModelSchema = {
   id: { validator: Number.isInteger },
+  userId: { validator: Number.isInteger, required: true },
   name: { validator: (val: any) => typeof val === 'string' && val.length <= 255, required: true },
   description: { validator: (val: any) => typeof val === 'string', required: true },
   createdAt: { validator: isDate },

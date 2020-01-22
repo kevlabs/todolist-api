@@ -25,7 +25,7 @@ function setUpReminder(db: DB, email: Email, reminder: ParsedFullReminder) {
       console.log('Could not send reminder', err)
     }
 
-  }, Math.min((reminder.dueAt as Date).getTime() - Date.now(), 0));
+  }, Math.min((reminder.dueAt).getTime() - Date.now(), 0));
 }
 
 async function sendReminders(db: DB, email: Email, frequencyMS: number) {
@@ -38,6 +38,8 @@ async function sendReminders(db: DB, email: Email, frequencyMS: number) {
 
     // set up timeout for each reminder
     reminders.forEach(reminder => setUpReminder(db, email, reminder));
+
+    console.log('Reminders to set up', reminders);
 
   } catch (err) {
     console.log(err);

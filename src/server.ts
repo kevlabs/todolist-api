@@ -8,6 +8,7 @@ import express from 'express';
 import path from 'path';
 import morgan from 'morgan';
 import bodyParser from 'body-parser';
+import cookieSession from 'cookie-session';
 import DB from './lib/db';
 import Email from './lib/email';
 import { dbParams, emailParams } from './lib/config-vars';
@@ -25,7 +26,7 @@ process.env.TZ = process.env.TZ  || 'America/Toronto'
 const db = new DB(dbParams);
 const email = new Email(emailParams);
 
-// start reminder job
+// start reminder job - check every min for dev purposes
 sendReminders(db, email, 1);
 
 // instantiate app/server
@@ -35,12 +36,19 @@ const app = express();
 (ENV === 'development') && app.use(morgan('dev'));
 
 // register middlewares
-app.use(bodyParser.json({ limit: '10mb' }));
-app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(cookieSession({ name: 'session', keys: ['Coolstuffgoesonhere'], maxAge: 365 * 24 * 60 * 60 * 1000 }),)
 
 
 app.use('/api/tasks', taskRouter(db));
 app.use('/api/reminders', reminderRouter(db));
+
+// dummy login for dev
+app.get('/api/login/:id', async (req, res) => {
+  req.session!.userId = parseInt(req.params.id, 10);
+  res.send(`Logged in as user: ${req.session!.userId}`);
+});
 
 // serve static files in public/
 app.use(express.static(path.join(__dirname, 'public')));

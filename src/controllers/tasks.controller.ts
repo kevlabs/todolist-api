@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { accessControl } from '../lib/utils'
 import DB from '../lib/db';
 import taskModel from '../models/tasks.model';
 import reminderModel from '../models/reminders.model';
@@ -6,6 +7,9 @@ import reminderModel from '../models/reminders.model';
 export default function(db: DB) {
 
   const router = Router();
+
+  // all tasks route are protected
+  router.use(accessControl);
 
   router.route('/')
     // get all tasks
@@ -30,7 +34,7 @@ export default function(db: DB) {
 
           // set up default reminder if due in more than 5 mins
           const fiveMinutes = 1000 * 60 * 5;
-          if (task.dueAt - Date.now() > fiveMinutes) {
+          if (task.dueAt.getTime() - Date.now() > fiveMinutes) {
             const reminderInput = {
               taskId: task.id,
               notes: `Your task ${task.name} is almost due.`,

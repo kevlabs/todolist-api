@@ -1,17 +1,20 @@
 import { Router } from 'express';
+import { accessControl } from '../lib/utils'
 import DB from '../lib/db';
-import taskModel from '../models/tasks.model';
 import reminderModel from '../models/reminders.model';
 
 export default function(db: DB) {
 
   const router = Router();
 
+  // all reminders route are protected
+  router.use(accessControl);
+
   router.route('/')
     // get all current reminders
     .get(async (req, res) => {
       try {
-        const reminders = await reminderModel.getAllReminders(db.query);
+        const reminders = await reminderModel.getAllReminders(db.query, userId);
         res.json(reminders);
 
       } catch (err) {
