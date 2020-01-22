@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { accessControl } from '../lib/utils'
 import DB from '../lib/db';
 import reminderModel from '../models/reminders.model';
+import taskModel from 'src/models/tasks.model';
 
 export default function(db: DB) {
 
@@ -14,7 +15,7 @@ export default function(db: DB) {
     // get all current reminders
     .get(async (req, res) => {
       try {
-        const reminders = await reminderModel.getAllReminders(db.query, userId);
+        const reminders = await reminderModel.getAllReminders(db.query, req.session.userId);
         res.json(reminders);
 
       } catch (err) {
@@ -27,7 +28,18 @@ export default function(db: DB) {
     // create new reminder
     .post(async (req, res) => {
       try {
-        const reminder = await reminderModel.createReminder(db.query, req.body);
+        const reminder = await db.transaction(async (query) => {
+          // check that task belongs to user
+          const task = await taskModel.getTaskById(query, req.body.taskId, req.session.userId);
+
+          // abort transaction if no task found
+          if (!task) throw Error('Invalid reminder');
+
+          // create task
+          return await reminderModel.createReminder(db.query, req.body);
+
+        });
+
         res.json(reminder);
 
       } catch (err) {
@@ -41,7 +53,7 @@ export default function(db: DB) {
     // get reminder by id
     .get(async (req, res) => {
       try {
-        const reminder = await reminderModel.getReminderById(db.query, parseInt(req.params.id));
+        const reminder = await reminderModel.getReminderById(db.query, parseInt(req.params.id), req.session.userId);
         res.json(reminder);
 
       } catch (err) {
@@ -54,7 +66,7 @@ export default function(db: DB) {
     // update reminder
     .put(async (req, res) => {
       try {
-        const reminder = await reminderModel.updateReminder(db.query, { ...req.body, id: parseInt(req.params.id) });
+        const reminder = await reminderModel.updateReminder(db.query, { ...req.body, id: parseInt(req.params.id) }, req.session.userId);
         res.json(reminder);
 
       } catch (err) {
@@ -67,7 +79,7 @@ export default function(db: DB) {
     // delete reminder
     .delete(async (req, res) => {
       try {
-        const reminder = await reminderModel.deleteReminder(db.query, parseInt(req.params.id));
+        const reminder = await reminderModel.deleteReminder(db.query, parseInt(req.params.id), req.session.userId);
         res.json(reminder);
 
       } catch (err) {

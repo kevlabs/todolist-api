@@ -29,7 +29,7 @@ export type ParsedReminder = Pick<IReminder, 'id' | 'taskId' | 'notes' | 'dueAt'
 
 export type ParsedFullReminder = ParsedReminder & ParsedReminderTask;
 
-const reminderSchema: ModelSchema = {
+export const reminderSchema: ModelSchema = {
   id: { validator: Number.isInteger },
   taskId: { validator: Number.isInteger, required: true },
   notes: { validator: (val: any) => typeof val === 'string', required: true },
@@ -46,10 +46,10 @@ export async function getAllReminders(query: DB['query'], userId?: number): Prom
     `SELECT t.name as task_name, t.description as task_description, t.due_at as task_due_at, r.id, r.task_id, r.notes, r.due_at, r.status
     FROM reminders as r
     JOIN tasks as t ON r.task_id = t.id
-    ${userId ? 'JOIN users as u on t.user_id = u.id' : ''}
-    WHERE r.status = 'Pending' AND r.is_deleted = FALSE${userId ? ' AND u.id = $1' : '' }
+    WHERE r.status = 'Pending' AND r.is_deleted = FALSE
+    ${userId ? ' AND t.user_id = $1' : '' }
     ORDER BY r.due_at ASC`,
-    userId ? [userId] : []
+    userId ? [userId] : [],
   );
 
   return parseSQLResult(reminders, ['taskId', 'taskName', 'taskDesciption', 'taskDueAt', 'id', 'notes', 'dueAt', 'status']) as (ParsedFullReminder | undefined)[];
@@ -64,9 +64,9 @@ export async function getReminderById(query: DB['query'], id: number, userId?: n
     `SELECT t.name as task_name, t.description as task_description, t.due_at as task_due_at, r.id, r.task_id, r.notes, r.due_at, r.status
     FROM reminders as r
     JOIN tasks as t ON r.task_id = t.id
-    ${userId ? 'JOIN users as u on t.user_id = u.id' : ''}
-    WHERE r.id = $1 AND r.is_deleted = FALSE${userId ? ' AND u.id = $2' : '' }`,
-    userId ? [id, userId] : [id]
+    WHERE r.id = $1 AND r.is_deleted = FALSE
+    ${userId ? ' AND t.user_id = $2' : '' }`,
+    userId ? [id, userId] : [id],
   );
 
   return parseSQLResultOne(reminder, ['taskId', 'taskName', 'taskDesciption', 'taskDueAt', 'id', 'notes', 'dueAt', 'status']) as ParsedFullReminder | undefined;
@@ -83,9 +83,10 @@ export async function getAllRemindersByTaskId(query: DB['query'], taskId: number
     FROM reminders as r
     JOIN tasks as t ON r.task_id = t.id
     JOIN users as u ON t.user_id = u.id
-    WHERE r.task_id = $1 AND r.is_deleted = FALSE${userId ? ' AND u.id = $2' : '' }
+    WHERE r.task_id = $1 AND r.is_deleted = FALSE
+    ${userId ? ' AND t.user_id = $2' : '' }
     ORDER BY t.due_at ASC`,
-    userId ? [taskId, userId] : [taskId]
+    userId ? [taskId, userId] : [taskId],
   );
 
   return parseSQLResult(reminders, ['username', 'email', 'taskId', 'taskName', 'taskDesciption', 'taskDueAt', 'id', 'notes', 'dueAt', 'status']) as (ParsedFullReminder & ParsedReminderUser | undefined)[];
@@ -99,10 +100,10 @@ export async function getAllRemindersDueBy(query: DB['query'], timestamp: Date, 
     `SELECT t.name as task_name, t.description as task_description, t.due_at as task_due_at, r.id, r.task_id, r.notes, r.due_at, r.status
     FROM reminders as r
     JOIN tasks as t ON r.task_id = t.id
-    ${userId ? 'JOIN users as u on t.user_id = u.id' : ''}
-    WHERE r.due_at <= $1 AND r.status = 'Pending' AND r.is_deleted = FALSE${userId ? ' AND u.id = $2' : '' }
+    WHERE r.due_at <= $1 AND r.status = 'Pending' AND r.is_deleted = FALSE
+    ${userId ? ' AND t.user_id = $2' : '' }
     ORDER BY r.due_at ASC`,
-    userId ? [timestamp, userId] : [timestamp]
+    userId ? [timestamp, userId] : [timestamp],
   );
 
   return parseSQLResult(reminders, ['taskId', 'taskName', 'taskDesciption', 'taskDueAt', 'id', 'notes', 'dueAt', 'status']) as (ParsedFullReminder | undefined)[];
@@ -142,7 +143,8 @@ export async function updateReminder(query: DB['query'], input: Record<string, a
   const reminder = await query(
     `UPDATE reminders
     SET ${names} = ${values}
-    WHERE id = $${nextParamIndex} AND is_deleted = FALSE${userId ? ` AND task_id = (SELECT id FROM tasks WHERE user_id = $${nextParamIndex + 1} AND id = task_id)` : '' }
+    WHERE id = $${nextParamIndex} AND is_deleted = FALSE
+    ${userId ? ` AND task_id = (SELECT id FROM tasks WHERE user_id = $${nextParamIndex + 1} AND id = task_id)` : '' }
     RETURNING *`,
     userId ? [...params, reminderId, userId] : [...params, reminderId],
   );
@@ -207,6 +209,7 @@ export async function deleteRemindersByTaskId(query: DB['query'], taskId: number
 }
 
 export default {
+  reminderSchema,
   createReminder,
   getAllReminders,
   getAllRemindersByTaskId,

@@ -1,6 +1,4 @@
-import DB from '../lib/db';
-import { ModelSchema, getRequiredColumns, validate, parseSQLResult, parseSQLResultOne, parseSQLQueryColumns } from '../lib/model';
-import { isDate } from '../lib/utils';
+import { ModelSchema } from '../lib/model';
 
 export interface IUser {
   id: number;
@@ -12,7 +10,7 @@ export interface IUser {
 
 export type ParsedUser = Pick<IUser, 'username' | 'email'>;
 
-const userSchema: ModelSchema = {
+export const userSchema: ModelSchema = {
   id: { validator: Number.isInteger },
   username: { validator: (val: any) => typeof val === 'string' && val.length <= 255, required: true },
   password: { validator: (val: any) => typeof val === 'string' && val.length <= 255, required: true },

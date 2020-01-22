@@ -15,7 +15,7 @@ export default function(db: DB) {
     // get all tasks
     .get(async (req, res) => {
       try {
-        const tasks = await taskModel.getAllTasks(db.query);
+        const tasks = await taskModel.getAllTasks(db.query, req.session.userId);
         res.json(tasks);
 
       } catch (err) {
@@ -30,7 +30,7 @@ export default function(db: DB) {
       try {
         const task = await db.transaction(async (query) => {
 
-          const task = await taskModel.createTask(query, req.body);
+          const task = await taskModel.createTask(query, { ...req.body, userId: req.session.userId });
 
           // set up default reminder if due in more than 5 mins
           const fiveMinutes = 1000 * 60 * 5;
@@ -62,7 +62,7 @@ export default function(db: DB) {
     // get task by id
     .get(async (req, res) => {
       try {
-        const task = await taskModel.getTaskById(db.query, parseInt(req.params.id));
+        const task = await taskModel.getTaskById(db.query, parseInt(req.params.id), req.session.userId);
         res.json(task);
 
       } catch (err) {
@@ -78,7 +78,7 @@ export default function(db: DB) {
         const task = await db.transaction(async (query) => {
 
           // update task
-          const task = await taskModel.updateTask(query, { ...req.body, id: parseInt(req.params.id) });
+          const task = await taskModel.updateTask(query, { ...req.body, id: parseInt(req.params.id) }, req.session.userId);
 
           // if task status changed to completed, update reminders
           req.body[status] === 'Completed' && await reminderModel.updateRemindersByTaskId(query, task.id, { status: 'Cancelled' });
@@ -100,7 +100,7 @@ export default function(db: DB) {
       try {
         const task = await db.transaction(async (query) => {
           // delete task
-          const task = await taskModel.deleteTask(db.query, parseInt(req.params.id));
+          const task = await taskModel.deleteTask(db.query, parseInt(req.params.id), req.session.userId);
 
           // delete reminders
           await reminderModel.deleteRemindersByTaskId(query, task.id);
@@ -121,7 +121,7 @@ export default function(db: DB) {
   // get all reminders for task
   router.get('/:id/reminders', async (req, res) => {
     try {
-      const reminders = await reminderModel.getAllRemindersByTaskId(db.query, parseInt(req.params.id));
+      const reminders = await reminderModel.getAllRemindersByTaskId(db.query, parseInt(req.params.id), req.session.userId);
       res.json(reminders);
 
     } catch (err) {
