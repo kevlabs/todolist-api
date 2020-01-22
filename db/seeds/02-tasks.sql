@@ -1,2 +1,2 @@
-INSERT INTO tasks (name, description, due_at) VALUES ('Watch TV', 'Something on Netflix', '2020-01-25 20:55:00-05');
-INSERT INTO tasks (name, description, due_at) VALUES ('Book Vacation', 'Croatia, Egypt or Greece', '2020-01-31 18:20:00-05');
+INSERT INTO tasks (user_id, name, description, due_at) VALUES (1, 'Watch TV', 'Something on Netflix', '2020-01-25 20:55:00-05');
+INSERT INTO tasks (user_id, name, description, due_at) VALUES (1, 'Book Vacation', 'Croatia, Egypt or Greece', '2020-01-31 18:20:00-05');
