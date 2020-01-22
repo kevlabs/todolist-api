@@ -81,7 +81,7 @@ export default function(db: DB) {
           const task = await taskModel.updateTask(query, { ...req.body, id: parseInt(req.params.id) }, req.session.userId);
 
           // if task status changed to completed, update reminders
-          req.body[status] === 'Completed' && await reminderModel.updateRemindersByTaskId(query, task.id, { status: 'Cancelled' });
+          req.body.status === 'Completed' && await reminderModel.updateRemindersByTaskId(query, task.id, { status: 'Cancelled' });
 
           return task;
         });
