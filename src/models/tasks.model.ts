@@ -7,21 +7,21 @@ const taskSchema: ModelSchema = {
   description: { validator: (val: any) => typeof val === 'string', required: true },
   createdAt: { validator: Number.isInteger },
   dueAt: { validator: Number.isInteger, required: true },
-  status: { validator: (val: any) => ['Started', 'Not started', 'Completed', 'Inactive'].includes(val) },
+  status: { validator: (val: any) => ['Started', 'Not started', 'Completed', 'Inactive', 'Overdue'].includes(val) },
   isDeleted: { validator: (val: any) => typeof val === 'boolean' },
 };
 
 export async function getAllTasks(query: DB['query']): Promise<Record<string, any>[]> {
 
   const tasks = await query(
-    `SELECT name, description, due_at, status
+    `SELECT id, name, description, due_at, status
     FROM tasks
     WHERE status <> 'Completed' AND is_deleted = FALSE
     ORDER BY due_at ASC`,
     []
   );
 
-  return parseSQLResult(tasks, ['name', 'description', 'dueAt', 'status']);
+  return parseSQLResult(tasks, ['id', 'name', 'description', 'dueAt', 'status']);
 
 }
 
@@ -29,29 +29,30 @@ export async function getTaskById(query: DB['query'], id: number): Promise<Recor
 
   validate({ id }, { id: taskSchema.id });
 
-  const tasks = await query(
-    `SELECT name, description, due_at, status
+  const task = await query(
+    `SELECT id, name, description, due_at, status
     FROM tasks
     WHERE id = $1 AND is_deleted = FALSE`,
     [id]
   );
 
-  return parseSQLResultOne(tasks, ['name', 'description', 'dueAt', 'status']);
+  return parseSQLResultOne(task, ['id', 'name', 'description', 'dueAt', 'status']);
 
 }
 
 export async function createTask(query: DB['query'], input: Record<string, any>): Promise<Record<string, any>> {
   // input is restricted to required fields
   const safeInput = validate(input, getRequiredColumns(taskSchema));
+  const { names, values, params } = parseSQLQueryColumns(safeInput);
 
   const task = await query(
-    `INSERT INTO tasks (name, description, due_at)
-    VALUES ($1, $2, $3)
+    `INSERT INTO tasks ${names}
+    VALUES ${values}
     RETURNING *`,
-    [safeInput.name, safeInput.description, safeInput.dueAt],
+    params,
   );
 
-  const parsedTask = parseSQLResultOne(task, ['name', 'description', 'dueAt', 'status'])
+  const parsedTask = parseSQLResultOne(task, ['id', 'name', 'description', 'dueAt', 'status'])
 
   if (!parsedTask) throw Error('Task could not be created');
 
@@ -77,7 +78,7 @@ export async function updateTask(query: DB['query'], input: Record<string, any>)
     [...params, taskId],
   );
 
-  const parsedTask = parseSQLResultOne(task, ['name', 'description', 'dueAt', 'status']);
+  const parsedTask = parseSQLResultOne(task, ['id', 'name', 'description', 'dueAt', 'status']);
 
   if (!parsedTask) throw Error('Task could not be updated');
 
@@ -95,7 +96,7 @@ export async function deleteTask(query: DB['query'], id: number): Promise<Record
     [id],
   );
 
-  const parsedTask = parseSQLResultOne(task, ['name', 'description', 'dueAt', 'status']);
+  const parsedTask = parseSQLResultOne(task, ['id', 'name', 'description', 'dueAt', 'status']);
 
   if (!parsedTask) throw Error('Task could not be deleted');
 

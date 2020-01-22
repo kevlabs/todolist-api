@@ -129,8 +129,7 @@ export function parse(input: Record<string, any>, columns: Record<string, ModelP
 // PARSE SQL RESULTS
 // see parse. Returns an array of parsed results. Keys of array item are camel-case
 export function parseSQLResult(input: Record<string, any>[], columns: Record<string, ModelParseColumn> | string[]): Record<string, any>[] {
-
-  return input.map(row => parse(camelCaseKeys(row), columns));
+  return input.map(row => row && parse(camelCaseKeys(row), columns));
 
 }
 
