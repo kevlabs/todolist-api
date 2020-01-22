@@ -26,7 +26,7 @@ const db = new DB(dbParams);
 const email = new Email(emailParams);
 
 // start reminder job
-sendReminders(db, 1);
+sendReminders(db, email, 1);
 
 // instantiate app/server
 const app = express();

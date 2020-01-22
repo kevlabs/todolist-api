@@ -2,6 +2,18 @@ import DB from '../lib/db';
 import { ModelSchema, getRequiredColumns, validate, parseSQLResult, parseSQLResultOne, parseSQLQueryColumns } from '../lib/model';
 import { isDate } from '../lib/utils';
 
+export interface ITask {
+  id: number;
+  name: string;
+  description: string;
+  createdAt: Date;
+  dueAt: Date;
+  status: 'Started' | 'Not started' | 'Completed' | 'Inactive' | 'Overdue';
+  isDeleted: boolean;
+}
+
+export type ParsedTask = Pick<ITask, 'id' | 'name' | 'description' | 'dueAt' | 'status'>;
+
 const taskSchema: ModelSchema = {
   id: { validator: Number.isInteger },
   name: { validator: (val: any) => typeof val === 'string' && val.length <= 255, required: true },
@@ -12,7 +24,9 @@ const taskSchema: ModelSchema = {
   isDeleted: { validator: (val: any) => typeof val === 'boolean' },
 };
 
-export async function getAllTasks(query: DB['query']): Promise<Record<string, any>[]> {
+export async function getAllTasks(
+  query: DB['query']
+): Promise<(ParsedTask | undefined)[]> {
 
   const tasks = await query(
     `SELECT id, name, description, due_at, status
@@ -22,11 +36,11 @@ export async function getAllTasks(query: DB['query']): Promise<Record<string, an
     []
   );
 
-  return parseSQLResult(tasks, ['id', 'name', 'description', 'dueAt', 'status']);
+  return parseSQLResult(tasks, ['id', 'name', 'description', 'dueAt', 'status']) as (ParsedTask | undefined)[];
 
 }
 
-export async function getTaskById(query: DB['query'], id: number): Promise<Record<string, any>> {
+export async function getTaskById(query: DB['query'], id: number): Promise<ParsedTask | undefined> {
 
   validate({ id }, { id: taskSchema.id });
 
@@ -37,11 +51,11 @@ export async function getTaskById(query: DB['query'], id: number): Promise<Recor
     [id]
   );
 
-  return parseSQLResultOne(task, ['id', 'name', 'description', 'dueAt', 'status']);
+  return parseSQLResultOne(task, ['id', 'name', 'description', 'dueAt', 'status']) as ParsedTask | undefined;
 
 }
 
-export async function createTask(query: DB['query'], input: Record<string, any>): Promise<Record<string, any>> {
+export async function createTask(query: DB['query'], input: Record<string, any>): Promise<ParsedTask> {
   // input is restricted to required fields
   const safeInput = validate(input, getRequiredColumns(taskSchema));
   const { names, values, params } = parseSQLQueryColumns(safeInput);
@@ -53,14 +67,14 @@ export async function createTask(query: DB['query'], input: Record<string, any>)
     params,
   );
 
-  const parsedTask = parseSQLResultOne(task, ['id', 'name', 'description', 'dueAt', 'status'])
+  const parsedTask = parseSQLResultOne(task, ['id', 'name', 'description', 'dueAt', 'status']) as ParsedTask | undefined;
 
   if (!parsedTask) throw Error('Task could not be created');
 
   return parsedTask;
 }
 
-export async function updateTask(query: DB['query'], input: Record<string, any>): Promise<Record<string, any>> {
+export async function updateTask(query: DB['query'], input: Record<string, any>): Promise<ParsedTask | undefined> {
   // can only update required fields + status - use deleteTask to delete
   const { id: taskId, ...safeInput } = validate(input, { ...getRequiredColumns(taskSchema), id: taskSchema.id, status: taskSchema.status }, false);
 
@@ -68,8 +82,8 @@ export async function updateTask(query: DB['query'], input: Record<string, any>)
 
   const { names, values, params, nextParamIndex } = parseSQLQueryColumns(safeInput);
 
-  // if nothing to update return empty array
-  if (!params.length) return [];
+  // if nothing to update return task
+  if (!params.length) return getTaskById(query, taskId);
 
   const task = await query(
     `UPDATE tasks
@@ -79,14 +93,14 @@ export async function updateTask(query: DB['query'], input: Record<string, any>)
     [...params, taskId],
   );
 
-  const parsedTask = parseSQLResultOne(task, ['id', 'name', 'description', 'dueAt', 'status']);
+  const parsedTask = parseSQLResultOne(task, ['id', 'name', 'description', 'dueAt', 'status']) as ParsedTask | undefined;
 
   if (!parsedTask) throw Error('Task could not be updated');
 
   return parsedTask;
 }
 
-export async function deleteTask(query: DB['query'], id: number): Promise<Record<string, any>> {
+export async function deleteTask(query: DB['query'], id: number): Promise<ParsedTask> {
   validate({ id }, { id: taskSchema.id });
 
   const task = await query(
@@ -97,7 +111,7 @@ export async function deleteTask(query: DB['query'], id: number): Promise<Record
     [id],
   );
 
-  const parsedTask = parseSQLResultOne(task, ['id', 'name', 'description', 'dueAt', 'status']);
+  const parsedTask = parseSQLResultOne(task, ['id', 'name', 'description', 'dueAt', 'status']) as ParsedTask | undefined;
 
   if (!parsedTask) throw Error('Task could not be deleted');
 
