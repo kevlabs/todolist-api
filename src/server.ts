@@ -40,7 +40,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieSession({ name: 'session', keys: ['Coolstuffgoesonhere'], maxAge: 365 * 24 * 60 * 60 * 1000 }),)
 
-
+// register routes
 app.use('/api/tasks', taskRouter(db));
 app.use('/api/reminders', reminderRouter(db));
 
@@ -54,4 +54,4 @@ app.get('/api/login/:id', async (req, res) => {
 app.use(express.static(path.join(__dirname, 'public')));
 
 // start listening
-app.listen(PORT, () => console.log(`App listening on port ${PORT}`));
+app.listen(PORT, () => console.log(`To do list listening on port ${PORT}`));

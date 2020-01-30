@@ -33,6 +33,7 @@ export default function(db: DB) {
           const task = await taskModel.createTask(query, { ...req.body, userId: req.session.userId });
 
           // set up default reminder if due in more than 5 mins
+          //TODO: move to separate util fn
           const fiveMinutes = 1000 * 60 * 5;
           if (task.dueAt.getTime() - Date.now() > fiveMinutes) {
             const reminderInput = {
@@ -47,7 +48,6 @@ export default function(db: DB) {
           return task;
 
         });
-        // const task = await taskModel.createTask(db.query, req.body);
 
         res.json(task);
 

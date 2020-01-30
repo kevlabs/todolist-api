@@ -11,9 +11,8 @@ function setUpReminder(db: DB, email: Email, reminder: ParsedFullReminder & Pars
 
       console.log('Attempting to send reminder');
 
-      // send reminder - REPLACE WITH USER INFO WHEN USER MODEL CREATED
+      // send reminder
       await email.send(
-        // { name: 'Test User', address: process.env.TEST_EMAIL_RECIPIENT },
         { name: reminder.username, address: reminder.email },
         `Reminder for to-do: ${reminder.taskName}`,
         `Dear ${reminder.username},\n\nYou have asked to be reminder about task: ${reminder.taskName}\nTask description: ${reminder.taskDescription}\nTask due at: ${reminder.taskDueAt}\nNotes: ${reminder.notes}\n\nThank you using to-do-list,\n\nCheers`,

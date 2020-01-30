@@ -9,7 +9,7 @@ export interface ITask {
   description: string;
   createdAt: Date;
   dueAt: Date;
-  status: 'Started' | 'Not started' | 'Completed' | 'Inactive' | 'Overdue';
+  status: 'Started' | 'Not started' | 'Completed' | 'Draft' | 'Overdue';
   isDeleted: boolean;
 }
 
@@ -22,7 +22,7 @@ export const taskSchema: ModelSchema = {
   description: { validator: (val: any) => typeof val === 'string', required: true },
   createdAt: { validator: isDate },
   dueAt: { validator: isDate, required: true },
-  status: { validator: (val: any) => ['Started', 'Not started', 'Completed', 'Inactive', 'Overdue'].includes(val) },
+  status: { validator: (val: any) => ['Started', 'Not started', 'Completed', 'Draft', 'Overdue'].includes(val) },
   isDeleted: { validator: (val: any) => typeof val === 'boolean' },
 };
 
